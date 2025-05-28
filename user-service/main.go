@@ -37,8 +37,13 @@ func main() {
 	CREATE PUBLICATION IF NOT EXISTS dbserver1_pub FOR TABLE users;
 	`); err != nil {
 		if pgErr, ok := err.(*pgconn.PgError); ok && pgErr.Code == "42710" {
+			// Publication already exists, this is fine
+			log.Println("Publication already exists")
+		} else {
 			log.Fatalf("failed to create publication: %v\n", err)
 		}
+	} else {
+		log.Println("Publication created successfully")
 	}
 	mh := handler.NewUserHandler(pool)
 	mux := http.NewServeMux()

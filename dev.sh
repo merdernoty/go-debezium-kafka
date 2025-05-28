@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 
 # 1) Поднимаем инфра (Kafka, ZK, Postgres, Debezium)
-podman compose up -d
+podman compose -f docker-compose.infra.yml up -d
 
 # 2) Ждём, что Postgres и Kafka готовы (можно убрать или увеличить паузу)
-echo "⏳ Ждём 5 секунд, пока стартует Postgres и Kafka..."
-sleep 5
+echo "⏳ Ждём 10 секунд, пока стартует Postgres и Kafka..."
+sleep 10
 
 # 3) Экспортируем переменные окружения для user-service
 export DB_DSN="postgres://user:pass@localhost:5432/userdb?sslmode=disable"
@@ -24,6 +24,13 @@ export DB_DSN="postgres://user:pass@localhost:5432/userdb?sslmode=disable"
   export GROUP_ID="order-group"
   air -c .air.toml
 ) &
+
+# 6) Регистрируем Debezium коннектор
+echo "⏳ Ждём 10 секунд, пока Kafka Connect полностью запустится..."
+sleep 10
+echo "🔌 Регистрируем Debezium коннектор..."
+curl -i -X POST -H "Accept:application/json" -H "Content-Type:application/json" \
+  http://localhost:8083/connectors/ -d @kafka-connect/connector-postgres.json
 
 echo "🚀 Dev готов:
  • http://localhost:8001 — user-service
